@@ -464,11 +464,11 @@ class Softmax(Distribution):
             self.prefix = '_' + self.prefix
 
     def check_logits(self):
-        ### check logits are valid
+        ### check logits are valid (torch.compile compatible - no CPU transfers)
         nans = torch.isnan(self.logits)
         infs = torch.isinf(self.logits)
-        num_nans = ptu.get_numpy(torch.sum(nans))
-        num_infs = ptu.get_numpy(torch.sum(infs))
+        num_nans = torch.sum(nans).item()
+        num_infs = torch.sum(infs).item()
         if num_nans > 0:
             print("WARNING! num nans:", num_nans)
         if num_infs > 0:

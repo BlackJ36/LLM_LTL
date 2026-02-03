@@ -44,7 +44,7 @@ else
     echo "Num trains: 500 (0.5x default)"
     echo "LR scale: 2.0 (linear scaling)"
 fi
-echo "torch.compile: disabled (compatibility issues)"
+echo "torch.compile: enabled (reduce-overhead)"
 echo "AMP (FP16): enabled"
 echo "Target update period: 2"
 echo "cuDNN benchmark: enabled"
@@ -57,6 +57,7 @@ if [ -n "$DEBUG_MODE" ]; then
         --task $TASK \
         --num-envs $NUM_ENVS \
         --epochs $EPOCHS \
+        --torch-compile \
         --amp \
         --target-update-period 2 \
         --no-video \
@@ -64,7 +65,6 @@ if [ -n "$DEBUG_MODE" ]; then
         $EXTRA_ARGS
 else
     # 正常模式：使用优化参数
-    # NOTE: torch.compile disabled due to compatibility issues with distributions.py
     uv run python experiments/run_rm_maple.py \
         --task $TASK \
         --num-envs $NUM_ENVS \
@@ -72,6 +72,7 @@ else
         --batch-size 2048 \
         --num-trains 500 \
         --lr-scale 2.0 \
+        --torch-compile \
         --amp \
         --target-update-period 2 \
         --no-video \
