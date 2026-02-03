@@ -120,9 +120,9 @@ class RMEnvWrapper(gym.Wrapper):
 
         return obs
 
-    def step(self, action):
+    def step(self, action, **kwargs):
         """Step environment and update RM."""
-        obs, env_reward, done, info = self.env.step(action)
+        obs, env_reward, done, info = self.env.step(action, **kwargs)
 
         # Detect events
         events = self.get_events(obs, info)
