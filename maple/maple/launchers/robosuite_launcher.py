@@ -43,6 +43,11 @@ def experiment(variant):
     # Test tensor placement
     test_tensor = ptu.zeros(10)
     print(f"Test tensor device: {test_tensor.device}")
+
+    # cuDNN benchmark mode for faster convolutions
+    if variant.get('cudnn_benchmark', True) and torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+        print(f"cuDNN benchmark: enabled")
     print("=" * 60 + "\n")
 
     # Initialize TensorBoard logging if enabled

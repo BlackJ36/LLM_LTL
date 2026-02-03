@@ -313,6 +313,14 @@ def process_variant(variant, args):
         variant['use_torch_compile'] = True
         variant['torch_compile_mode'] = args.compile_mode
 
+    # AMP (Automatic Mixed Precision)
+    if args.amp:
+        variant['trainer_kwargs']['use_amp'] = True
+
+    # Target network update period
+    if args.target_update_period:
+        variant['trainer_kwargs']['target_update_period'] = args.target_update_period
+
     # No video
     if args.no_video:
         variant['save_video'] = False
@@ -450,6 +458,10 @@ def main():
     parser.add_argument('--compile-mode', type=str, default='reduce-overhead',
                         choices=['default', 'reduce-overhead', 'max-autotune'],
                         help='torch.compile mode (default: reduce-overhead)')
+    parser.add_argument('--amp', action='store_true',
+                        help='Use Automatic Mixed Precision (FP16) for faster training')
+    parser.add_argument('--target-update-period', type=int, default=None,
+                        help='Target network update period (default: 1, use 2-5 to reduce compute)')
 
     # GPU configuration
     parser.add_argument('--gpu', type=int, default=0,

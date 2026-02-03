@@ -72,34 +72,67 @@ class SACHybridTrainer(SACTrainer):
 
     def train_from_torch(self, batch):
         gt.blank_stamp()
-        losses, stats = self.compute_loss(
-            batch,
-            skip_statistics=not self._need_to_update_eval_statistics,
-        )
-        """
-        Update networks
-        """
-        if self.use_automatic_entropy_tuning:
-            if losses.alpha_s_loss is not None:
-                self.alpha_s_optimizer.zero_grad()
-                losses.alpha_s_loss.backward()
-                self.alpha_s_optimizer.step()
 
-            self.alpha_p_optimizer.zero_grad()
-            losses.alpha_p_loss.backward()
-            self.alpha_p_optimizer.step()
+        if self.use_amp:
+            # AMP: Use autocast for forward pass and scaler for backward
+            with torch.cuda.amp.autocast():
+                losses, stats = self.compute_loss(
+                    batch,
+                    skip_statistics=not self._need_to_update_eval_statistics,
+                )
 
-        self.policy_optimizer.zero_grad()
-        losses.policy_loss.backward()
-        self.policy_optimizer.step()
+            # Update networks with scaled gradients
+            if self.use_automatic_entropy_tuning:
+                if losses.alpha_s_loss is not None:
+                    self.alpha_s_optimizer.zero_grad()
+                    self.scaler.scale(losses.alpha_s_loss).backward()
+                    self.scaler.step(self.alpha_s_optimizer)
 
-        self.qf1_optimizer.zero_grad()
-        losses.qf1_loss.backward()
-        self.qf1_optimizer.step()
+                self.alpha_p_optimizer.zero_grad()
+                self.scaler.scale(losses.alpha_p_loss).backward()
+                self.scaler.step(self.alpha_p_optimizer)
 
-        self.qf2_optimizer.zero_grad()
-        losses.qf2_loss.backward()
-        self.qf2_optimizer.step()
+            self.policy_optimizer.zero_grad()
+            self.scaler.scale(losses.policy_loss).backward()
+            self.scaler.step(self.policy_optimizer)
+
+            self.qf1_optimizer.zero_grad()
+            self.scaler.scale(losses.qf1_loss).backward()
+            self.scaler.step(self.qf1_optimizer)
+
+            self.qf2_optimizer.zero_grad()
+            self.scaler.scale(losses.qf2_loss).backward()
+            self.scaler.step(self.qf2_optimizer)
+
+            self.scaler.update()
+        else:
+            # Standard training without AMP
+            losses, stats = self.compute_loss(
+                batch,
+                skip_statistics=not self._need_to_update_eval_statistics,
+            )
+
+            if self.use_automatic_entropy_tuning:
+                if losses.alpha_s_loss is not None:
+                    self.alpha_s_optimizer.zero_grad()
+                    losses.alpha_s_loss.backward()
+                    self.alpha_s_optimizer.step()
+
+                self.alpha_p_optimizer.zero_grad()
+                losses.alpha_p_loss.backward()
+                self.alpha_p_optimizer.step()
+
+            self.policy_optimizer.zero_grad()
+            losses.policy_loss.backward()
+            self.policy_optimizer.step()
+
+            self.qf1_optimizer.zero_grad()
+            losses.qf1_loss.backward()
+            self.qf1_optimizer.step()
+
+            self.qf2_optimizer.zero_grad()
+            losses.qf2_loss.backward()
+            self.qf2_optimizer.step()
 
         self._n_train_steps_total += 1
 
