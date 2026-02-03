@@ -15,13 +15,18 @@ TASK=${1:-stack}
 NUM_ENVS=${2:-4}
 EPOCHS=${3:-500}
 
+# 移除前3个位置参数，剩下的作为额外参数
+shift 3 2>/dev/null || true
+
 # 检查是否为 debug 模式
 DEBUG_MODE=""
+EXTRA_ARGS=""
 for arg in "$@"; do
     if [ "$arg" == "--debug" ]; then
         DEBUG_MODE="--debug"
         EPOCHS=10  # Debug 模式使用更少的 epochs
-        break
+    else
+        EXTRA_ARGS="$EXTRA_ARGS $arg"
     fi
 done
 
@@ -45,15 +50,6 @@ echo "Target update period: 2"
 echo "cuDNN benchmark: enabled"
 echo "OMP_NUM_THREADS: $OMP_NUM_THREADS"
 echo "=============================================="
-
-# 过滤掉已处理的参数
-EXTRA_ARGS=""
-for arg in "$@"; do
-    case $arg in
-        --debug) ;;  # 已处理
-        *) EXTRA_ARGS="$EXTRA_ARGS $arg" ;;
-    esac
-done
 
 if [ -n "$DEBUG_MODE" ]; then
     # Debug 模式：使用默认小参数
