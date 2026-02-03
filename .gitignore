@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data and logs (too large for git)
+data/
+*.zip
+*.tar.gz
+MUJOCO_LOG.TXT
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uv lock (optional - can be included for reproducibility)
+# uv.lock

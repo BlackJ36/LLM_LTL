@@ -1,0 +1,1 @@
+========================================== echo 实验1: 单环境 (num_envs=1) echo ========================================== uv run python maple/scripts/train.py --env lift --num_envs 1 --epochs 20 --debug --no_video --label single_env
