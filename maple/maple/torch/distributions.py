@@ -464,15 +464,16 @@ class Softmax(Distribution):
             self.prefix = '_' + self.prefix
 
     def check_logits(self):
-        ### check logits are valid (torch.compile compatible - no CPU transfers)
-        nans = torch.isnan(self.logits)
-        infs = torch.isinf(self.logits)
-        num_nans = torch.sum(nans).item()
-        num_infs = torch.sum(infs).item()
-        if num_nans > 0:
-            print("WARNING! num nans:", num_nans)
-        if num_infs > 0:
-            print("WARNING! num infs:", num_infs)
+        ### check logits are valid
+        ### NOTE: Disabled for torch.compile compatibility
+        ### The .item() call causes graph breaks. Enable only for debugging.
+        pass
+        # nans = torch.isnan(self.logits)
+        # infs = torch.isinf(self.logits)
+        # if torch.any(nans):
+        #     print("WARNING! found nans in logits")
+        # if torch.any(infs):
+        #     print("WARNING! found infs in logits")
 
     def sample_n(self, n):
         raise NotImplementedError

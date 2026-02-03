@@ -10,6 +10,9 @@ export CUDA_VISIBLE_DEVICES=$GPU_ID
 export OMP_NUM_THREADS=16
 export MKL_NUM_THREADS=16
 
+# torch.compile 优化：允许捕获标量输出
+export TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
+
 # 默认参数
 TASK=${1:-stack}
 NUM_ENVS=${2:-4}
