@@ -304,6 +304,9 @@ def process_variant(variant, args):
         variant['algorithm_kwargs']['batch_size'] = args.batch_size
     if args.num_trains:
         variant['algorithm_kwargs']['num_trains_per_train_loop'] = args.num_trains
+    if args.lr_scale != 1.0:
+        variant['trainer_kwargs']['policy_lr'] *= args.lr_scale
+        variant['trainer_kwargs']['qf_lr'] *= args.lr_scale
 
     # No video
     if args.no_video:
@@ -435,6 +438,8 @@ def main():
                         help='Training batch size (default: 1024, use 2048+ for Xeon CPUs)')
     parser.add_argument('--num-trains', type=int, default=None,
                         help='Number of training steps per epoch (default: 1000, use 500 for Xeon CPUs)')
+    parser.add_argument('--lr-scale', type=float, default=1.0,
+                        help='Learning rate scale factor (use 2.0 when batch_size is doubled)')
 
     # GPU configuration
     parser.add_argument('--gpu', type=int, default=0,

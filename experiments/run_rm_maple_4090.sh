@@ -22,6 +22,9 @@ echo "GPU: $GPU_ID"
 echo "Task: $TASK"
 echo "Num envs: $NUM_ENVS"
 echo "Epochs: $EPOCHS"
+echo "Batch size: 2048 (2x default)"
+echo "Num trains: 500 (0.5x default)"
+echo "LR scale: 2.0 (linear scaling)"
 echo "OMP_NUM_THREADS: $OMP_NUM_THREADS"
 echo "=============================================="
 
@@ -32,5 +35,6 @@ uv run python experiments/run_rm_maple.py \
     --epochs $EPOCHS \
     --batch-size 2048 \
     --num-trains 500 \
+    --lr-scale 2.0 \
     --no-video \
     "$@"
