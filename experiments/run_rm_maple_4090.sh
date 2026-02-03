@@ -6,9 +6,10 @@
 GPU_ID=${GPU_ID:-7}
 export CUDA_VISIBLE_DEVICES=$GPU_ID
 
-# 线程设置（避免过度线程化，但不要太少）
-export OMP_NUM_THREADS=16
-export MKL_NUM_THREADS=16
+# 线程设置（根据 num_envs 调整）
+# 8+ 环境建议用更多线程
+export OMP_NUM_THREADS=32
+export MKL_NUM_THREADS=32
 
 # torch.compile 优化：允许捕获标量输出
 export TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
