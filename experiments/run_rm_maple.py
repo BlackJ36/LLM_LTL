@@ -44,10 +44,10 @@ def get_base_variant():
             'num_epochs': 500,
             'num_expl_steps_per_train_loop': 3000,
             'num_eval_steps_per_epoch': 3000,
-            'num_trains_per_train_loop': 1000,
+            'num_trains_per_train_loop': 500,  # Reduced: fewer CPU sampling ops
             'min_num_steps_before_training': 10000,
             'max_path_length': 150,
-            'batch_size': 1024,
+            'batch_size': 2048,  # Increased: better GPU utilization
             'eval_epoch_freq': 10,
         },
         'trainer_kwargs': {
