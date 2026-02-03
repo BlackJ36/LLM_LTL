@@ -205,13 +205,15 @@ def experiment(variant):
     # Apply torch.compile optimization if enabled (PyTorch 2.x)
     if variant.get('use_torch_compile', False):
         compile_mode = variant.get('torch_compile_mode', 'reduce-overhead')
-        print(f"Applying torch.compile with mode='{compile_mode}'...")
+        print(f"\n[torch.compile] Applying with mode='{compile_mode}'...")
         qf1 = torch.compile(qf1, mode=compile_mode)
         qf2 = torch.compile(qf2, mode=compile_mode)
         target_qf1 = torch.compile(target_qf1, mode=compile_mode)
         target_qf2 = torch.compile(target_qf2, mode=compile_mode)
         policy = torch.compile(policy, mode=compile_mode)
-        print("torch.compile applied to all networks")
+        print(f"[torch.compile] Policy type: {type(policy).__module__}.{type(policy).__name__}")
+        print(f"[torch.compile] QF1 type: {type(qf1).__module__}.{type(qf1).__name__}")
+        print("[torch.compile] All networks compiled successfully\n")
 
     eval_policy = MakeDeterministic(policy)
 
