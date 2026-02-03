@@ -308,6 +308,11 @@ def process_variant(variant, args):
         variant['trainer_kwargs']['policy_lr'] *= args.lr_scale
         variant['trainer_kwargs']['qf_lr'] *= args.lr_scale
 
+    # torch.compile optimization
+    if args.torch_compile:
+        variant['use_torch_compile'] = True
+        variant['torch_compile_mode'] = args.compile_mode
+
     # No video
     if args.no_video:
         variant['save_video'] = False
@@ -440,6 +445,11 @@ def main():
                         help='Number of training steps per epoch (default: 1000, use 500 for Xeon CPUs)')
     parser.add_argument('--lr-scale', type=float, default=1.0,
                         help='Learning rate scale factor (use 2.0 when batch_size is doubled)')
+    parser.add_argument('--torch-compile', action='store_true',
+                        help='Use torch.compile for faster GPU computation (PyTorch 2.x)')
+    parser.add_argument('--compile-mode', type=str, default='reduce-overhead',
+                        choices=['default', 'reduce-overhead', 'max-autotune'],
+                        help='torch.compile mode (default: reduce-overhead)')
 
     # GPU configuration
     parser.add_argument('--gpu', type=int, default=0,
