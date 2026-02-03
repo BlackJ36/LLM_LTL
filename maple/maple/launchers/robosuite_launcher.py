@@ -48,6 +48,11 @@ def experiment(variant):
     if variant.get('cudnn_benchmark', True) and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         print(f"cuDNN benchmark: enabled")
+
+    # Enable TensorFloat32 for faster float32 matmul on Ampere+ GPUs
+    if torch.cuda.is_available():
+        torch.set_float32_matmul_precision('high')
+        print(f"TF32 matmul precision: high")
     print("=" * 60 + "\n")
 
     # Initialize TensorBoard logging if enabled
