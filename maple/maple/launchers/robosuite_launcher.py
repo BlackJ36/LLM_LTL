@@ -29,6 +29,22 @@ except ImportError:
     RM_WRAPPER_AVAILABLE = False
 
 def experiment(variant):
+    # GPU diagnostics
+    print("\n" + "=" * 60)
+    print("GPU DIAGNOSTICS")
+    print("=" * 60)
+    print(f"ptu._use_gpu: {ptu._use_gpu}")
+    print(f"ptu.device: {ptu.device}")
+    print(f"torch.cuda.is_available(): {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"torch.cuda.device_count(): {torch.cuda.device_count()}")
+        print(f"torch.cuda.current_device(): {torch.cuda.current_device()}")
+        print(f"torch.cuda.get_device_name(): {torch.cuda.get_device_name()}")
+    # Test tensor placement
+    test_tensor = ptu.zeros(10)
+    print(f"Test tensor device: {test_tensor.device}")
+    print("=" * 60 + "\n")
+
     # Initialize TensorBoard logging if enabled
     if variant.get('use_tensorboard', False):
         log_dir = logger.get_snapshot_dir()
