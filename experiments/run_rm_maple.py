@@ -44,10 +44,10 @@ def get_base_variant():
             'num_epochs': 500,
             'num_expl_steps_per_train_loop': 3000,
             'num_eval_steps_per_epoch': 3000,
-            'num_trains_per_train_loop': 500,  # Reduced: fewer CPU sampling ops
+            'num_trains_per_train_loop': 1000,
             'min_num_steps_before_training': 10000,
             'max_path_length': 150,
-            'batch_size': 2048,  # Increased: better GPU utilization
+            'batch_size': 1024,
             'eval_epoch_freq': 10,
         },
         'trainer_kwargs': {
@@ -299,6 +299,12 @@ def process_variant(variant, args):
     if args.epochs:
         variant['algorithm_kwargs']['num_epochs'] = args.epochs
 
+    # Training optimization (for Xeon CPUs with low clock speed)
+    if args.batch_size:
+        variant['algorithm_kwargs']['batch_size'] = args.batch_size
+    if args.num_trains:
+        variant['algorithm_kwargs']['num_trains_per_train_loop'] = args.num_trains
+
     # No video
     if args.no_video:
         variant['save_video'] = False
@@ -423,6 +429,12 @@ def main():
                         help='Number of parallel exploration environments')
     parser.add_argument('--dummy-vec-env', action='store_true',
                         help='Use DummyVecEnv (sequential)')
+
+    # Training optimization (for servers with low CPU clock speed)
+    parser.add_argument('--batch-size', type=int, default=None,
+                        help='Training batch size (default: 1024, use 2048+ for Xeon CPUs)')
+    parser.add_argument('--num-trains', type=int, default=None,
+                        help='Number of training steps per epoch (default: 1000, use 500 for Xeon CPUs)')
 
     # GPU configuration
     parser.add_argument('--gpu', type=int, default=0,
