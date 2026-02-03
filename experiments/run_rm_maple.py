@@ -254,7 +254,7 @@ def process_variant(variant, args):
 
     # Vectorized training
     variant['num_expl_envs'] = args.num_envs
-    variant['num_eval_envs'] = 1
+    variant['num_eval_envs'] = args.num_eval_envs
     variant['use_dummy_vec_env'] = args.dummy_vec_env
 
     # Override min_num_steps_before_training
@@ -443,6 +443,8 @@ def main():
     # Parallelization
     parser.add_argument('--num-envs', type=int, default=4,
                         help='Number of parallel exploration environments')
+    parser.add_argument('--num-eval-envs', type=int, default=1,
+                        help='Number of parallel evaluation environments (default: 1)')
     parser.add_argument('--dummy-vec-env', action='store_true',
                         help='Use DummyVecEnv (sequential)')
 
