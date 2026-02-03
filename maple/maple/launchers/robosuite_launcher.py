@@ -54,7 +54,8 @@ def experiment(variant):
 
     def make_env(mode):
         assert mode in ['expl', 'eval']
-        torch.set_num_threads(1)
+        # Don't limit threads in main process - only limit in subprocess workers
+        # torch.set_num_threads(1)  # Removed: this was limiting training performance
 
         env_variant = variant['env_variant']
 
