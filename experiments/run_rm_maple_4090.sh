@@ -47,7 +47,7 @@ else
     echo "Num trains: 500 (0.5x default)"
     echo "LR scale: 2.0 (linear scaling)"
 fi
-echo "torch.compile: enabled (reduce-overhead)"
+echo "torch.compile: enabled (default mode)"
 echo "AMP (FP16): enabled"
 echo "Target update period: 2"
 echo "cuDNN benchmark: enabled"
@@ -61,6 +61,7 @@ if [ -n "$DEBUG_MODE" ]; then
         --num-envs $NUM_ENVS \
         --epochs $EPOCHS \
         --torch-compile \
+        --compile-mode default \
         --amp \
         --target-update-period 2 \
         --no-video \
@@ -76,6 +77,7 @@ else
         --num-trains 500 \
         --lr-scale 2.0 \
         --torch-compile \
+        --compile-mode default \
         --amp \
         --target-update-period 2 \
         --no-video \
