@@ -4,12 +4,40 @@ Base proposition functions shared across tasks.
 These provide common checks for grasping, lifting, distance, etc.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 import numpy as np
 
 
+def safe_obs_get(obs: Union[Dict[str, Any], np.ndarray], info: Dict[str, Any], key: str, default=None):
+    """
+    Safely get a value from obs or info, handling both dict and numpy array obs.
+
+    After GymWrapper, obs becomes a numpy array, so we can't use obs.get().
+    This function falls back to info dict when obs is not a dict.
+
+    Args:
+        obs: Observation (dict or numpy array)
+        info: Info dict from environment
+        key: Key to look up
+        default: Default value if not found
+
+    Returns:
+        Value if found, else default
+    """
+    # Try info first (always available)
+    if key in info:
+        return info[key]
+
+    # If obs is dict, try to get from it
+    if isinstance(obs, dict):
+        return obs.get(key, default)
+
+    # obs is numpy array, can't get by key
+    return default
+
+
 def check_grasped(
-    obs: Dict[str, Any],
+    obs: Union[Dict[str, Any], np.ndarray],
     info: Dict[str, Any],
     gripper_threshold: float = 0.02
 ) -> bool:
@@ -17,14 +45,14 @@ def check_grasped(
     Check if gripper is closed (holding something).
 
     Args:
-        obs: Observation dict containing 'robot0_gripper_qpos'
-        info: Info dict (unused for base check)
+        obs: Observation (dict or numpy array)
+        info: Info dict
         gripper_threshold: Max gripper opening to consider closed
 
     Returns:
         True if gripper is closed
     """
-    gripper_qpos = obs.get('robot0_gripper_qpos', None)
+    gripper_qpos = safe_obs_get(obs, info, 'robot0_gripper_qpos', None)
     if gripper_qpos is None:
         return False
 
@@ -39,7 +67,7 @@ def check_grasped(
 
 
 def check_lifted(
-    obs: Dict[str, Any],
+    obs: Union[Dict[str, Any], np.ndarray],
     info: Dict[str, Any],
     obj_pos_key: str,
     table_height: float = 0.8,
@@ -49,7 +77,7 @@ def check_lifted(
     Check if object is lifted above table.
 
     Args:
-        obs: Observation dict
+        obs: Observation (dict or numpy array)
         info: Info dict containing object position
         obj_pos_key: Key for object position in info (e.g., 'cube_pos')
         table_height: Height of table surface
@@ -58,10 +86,7 @@ def check_lifted(
     Returns:
         True if object is above threshold
     """
-    obj_pos = info.get(obj_pos_key, None)
-    if obj_pos is None:
-        # Try obs
-        obj_pos = obs.get(obj_pos_key, None)
+    obj_pos = safe_obs_get(obs, info, obj_pos_key, None)
     if obj_pos is None:
         return False
 
@@ -156,7 +181,7 @@ def check_in_bounds(
 
 
 def check_angle_aligned(
-    obs: Dict[str, Any],
+    obs: Union[Dict[str, Any], np.ndarray],
     info: Dict[str, Any],
     cos_key: str,
     threshold: float = 0.95
@@ -165,7 +190,7 @@ def check_angle_aligned(
     Check if angle alignment (cosine similarity) is above threshold.
 
     Args:
-        obs: Observation dict
+        obs: Observation (dict or numpy array)
         info: Info dict containing cosine value
         cos_key: Key for cosine value
         threshold: Minimum cosine for alignment (0.95 ≈ 18°)
@@ -173,9 +198,7 @@ def check_angle_aligned(
     Returns:
         True if aligned
     """
-    cos_val = info.get(cos_key, None)
-    if cos_val is None:
-        cos_val = obs.get(cos_key, None)
+    cos_val = safe_obs_get(obs, info, cos_key, None)
     if cos_val is None:
         return False
 
@@ -183,14 +206,12 @@ def check_angle_aligned(
 
 
 def _get_position(
-    obs: Dict[str, Any],
+    obs: Union[Dict[str, Any], np.ndarray],
     info: Dict[str, Any],
     key: str
 ) -> Optional[np.ndarray]:
     """Helper to get position from obs or info."""
-    pos = info.get(key, None)
-    if pos is None:
-        pos = obs.get(key, None)
+    pos = safe_obs_get(obs, info, key, None)
     if pos is None:
         return None
 

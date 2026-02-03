@@ -5,8 +5,10 @@ Task: Stack red cube (A) on top of green cube (B).
 LTL: ◇(cubeA_grasped ∧ ◇(cubeA_lifted ∧ ◇(cubes_aligned ∧ ◇stacked)))
 """
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, Set, Union
 import numpy as np
+
+from llm_ltl.reward_machines.propositions.base_props import safe_obs_get
 
 # Default thresholds from robosuite stack.py
 TABLE_HEIGHT = 0.8
@@ -56,7 +58,7 @@ def get_events(obs: Dict[str, Any], info: Dict[str, Any]) -> Set[str]:
     return events
 
 
-def _get_cube_positions(obs: Dict[str, Any], info: Dict[str, Any]):
+def _get_cube_positions(obs: Union[Dict[str, Any], np.ndarray], info: Dict[str, Any]):
     """Get positions of cubeA (red) and cubeB (green)."""
     cubeA_pos = None
     cubeB_pos = None
@@ -67,9 +69,9 @@ def _get_cube_positions(obs: Dict[str, Any], info: Dict[str, Any]):
     if 'cubeB_pos' in info:
         cubeB_pos = np.array(info['cubeB_pos'])
 
-    # Try object-state from obs
+    # Try object-state from obs (only if obs is dict)
     if cubeA_pos is None or cubeB_pos is None:
-        obj_state = obs.get('object-state', None)
+        obj_state = safe_obs_get(obs, info, 'object-state', None)
         if obj_state is not None:
             # Stack task: first 7 values = cubeA (pos + quat), next 7 = cubeB
             if len(obj_state) >= 14:
@@ -83,12 +85,16 @@ def _get_cube_positions(obs: Dict[str, Any], info: Dict[str, Any]):
     return cubeA_pos, cubeB_pos
 
 
-def _check_cubeA_grasped(obs: Dict[str, Any], info: Dict[str, Any],
+def _check_cubeA_grasped(obs: Union[Dict[str, Any], np.ndarray], info: Dict[str, Any],
                           cubeA_pos: np.ndarray) -> bool:
     """Check if gripper is holding cubeA."""
-    gripper_qpos = obs.get('robot0_gripper_qpos', None)
+    # Method 1: Use info flag if available
+    if info.get('grasp', False):
+        return True
+
+    gripper_qpos = safe_obs_get(obs, info, 'robot0_gripper_qpos', None)
     if gripper_qpos is None:
-        return info.get('grasp', False)
+        return False
 
     if isinstance(gripper_qpos, np.ndarray):
         gripper_opening = gripper_qpos[0]
@@ -102,7 +108,7 @@ def _check_cubeA_grasped(obs: Dict[str, Any], info: Dict[str, Any],
     if cubeA_pos is None:
         return False
 
-    eef_pos = obs.get('robot0_eef_pos', None)
+    eef_pos = safe_obs_get(obs, info, 'robot0_eef_pos', None)
     if eef_pos is None:
         return gripper_opening < GRIPPER_CLOSED_THRESHOLD
 
@@ -127,7 +133,7 @@ def _check_cubes_aligned(cubeA_pos: np.ndarray, cubeB_pos: np.ndarray) -> bool:
     return horizontal_dist < ALIGN_THRESHOLD
 
 
-def _check_stacked(obs: Dict[str, Any], info: Dict[str, Any],
+def _check_stacked(obs: Union[Dict[str, Any], np.ndarray], info: Dict[str, Any],
                    cubeA_pos: np.ndarray, cubeB_pos: np.ndarray) -> bool:
     """Check if cubes are stacked and cubeA is released."""
     # Check success flag first
@@ -153,7 +159,7 @@ def _check_stacked(obs: Dict[str, Any], info: Dict[str, Any],
         return False
 
     # Gripper should be open (released)
-    gripper_qpos = obs.get('robot0_gripper_qpos', None)
+    gripper_qpos = safe_obs_get(obs, info, 'robot0_gripper_qpos', None)
     if gripper_qpos is not None:
         if isinstance(gripper_qpos, np.ndarray):
             gripper_opening = gripper_qpos[0]

@@ -44,8 +44,23 @@ def get_events(obs: Dict[str, Any], info: Dict[str, Any]) -> Set[str]:
 
 def _check_cube_grasped(obs: Dict[str, Any], info: Dict[str, Any]) -> bool:
     """Check if gripper is holding the cube."""
-    # Method 1: Check gripper qpos (closed = holding)
-    gripper_qpos = obs.get('robot0_gripper_qpos', None)
+    # Method 1: Use info flag if available (most reliable)
+    if info.get('grasp', False) or info.get('grasped', False):
+        return True
+
+    # Method 2: Check gripper qpos (closed = holding)
+    # Handle both dict obs and numpy array obs (after GymWrapper)
+    gripper_qpos = None
+    eef_pos = None
+
+    if isinstance(obs, dict):
+        gripper_qpos = obs.get('robot0_gripper_qpos', None)
+        eef_pos = obs.get('robot0_eef_pos', None)
+    else:
+        # obs is numpy array after GymWrapper - use info instead
+        gripper_qpos = info.get('robot0_gripper_qpos', None)
+        eef_pos = info.get('robot0_eef_pos', None)
+
     if gripper_qpos is not None:
         if isinstance(gripper_qpos, np.ndarray):
             gripper_opening = gripper_qpos[0]
@@ -56,14 +71,12 @@ def _check_cube_grasped(obs: Dict[str, Any], info: Dict[str, Any]) -> bool:
         if gripper_opening < GRIPPER_CLOSED_THRESHOLD:
             # Also check that cube is near gripper
             cube_pos = _get_cube_pos(obs, info)
-            eef_pos = obs.get('robot0_eef_pos', None)
             if cube_pos is not None and eef_pos is not None:
                 dist = np.linalg.norm(np.array(cube_pos) - np.array(eef_pos))
                 if dist < 0.05:  # Within 5cm
                     return True
 
-    # Method 2: Use info flag if available
-    return info.get('grasp', False) or info.get('grasped', False)
+    return False
 
 
 def _check_cube_lifted(obs: Dict[str, Any], info: Dict[str, Any]) -> bool:
@@ -83,10 +96,11 @@ def _get_cube_pos(obs: Dict[str, Any], info: Dict[str, Any]) -> np.ndarray:
         if key in info:
             return np.array(info[key])
 
-    # Try object-state in obs
-    obj_state = obs.get('object-state', None)
-    if obj_state is not None:
-        # First 3 values are typically position
-        return np.array(obj_state[:3])
+    # Try object-state in obs (only if obs is dict)
+    if isinstance(obs, dict):
+        obj_state = obs.get('object-state', None)
+        if obj_state is not None:
+            # First 3 values are typically position
+            return np.array(obj_state[:3])
 
     return None

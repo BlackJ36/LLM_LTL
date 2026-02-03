@@ -43,7 +43,8 @@ class SkillController:
             skills=['atomic'],
         )
         self._config = copy.deepcopy(default_config)
-        self._config.update(config)
+        if config is not None:
+            self._config.update(config)
 
         skill_names = self._config['skills']
         for skill_name in skill_names:

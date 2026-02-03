@@ -197,18 +197,30 @@ def experiment(variant):
     # Preserve single eval_env for video recording
     eval_env_for_video = eval_env
 
+    # Get RM config for subprocess creation (avoids pickling RM objects)
+    rm_task_name = variant.get('rm_variant', {}).get('task_name', None)
+    rm_config = {
+        'enabled': rm_enabled,
+        'task_name': rm_task_name,
+        'reward_scale': rm_reward_scale,
+        'use_only': rm_use_only,
+        'extend_obs': rm_extend_obs,
+    }
+
     # Evaluation environment parallelization
     if num_eval_envs > 1:
         def make_eval_env_fn():
             env = make_env(mode='eval')
-            # Wrap with RM if enabled
-            if rm_enabled:
-                from copy import deepcopy
+            # Wrap with RM if enabled - create fresh RM in subprocess
+            if rm_config['enabled'] and rm_config['task_name']:
+                from llm_ltl.reward_machines import create_rm, get_events_fn
+                rm = create_rm(rm_config['task_name'])
+                events_fn = get_events_fn(rm_config['task_name'])
                 env = RMEnvWrapper(
-                    env, deepcopy(rm_instance), rm_events_fn,
-                    rm_reward_scale=rm_reward_scale,
-                    use_rm_reward_only=rm_use_only,
-                    extend_obs_with_rm=rm_extend_obs,
+                    env, rm, events_fn,
+                    rm_reward_scale=rm_config['reward_scale'],
+                    use_rm_reward_only=rm_config['use_only'],
+                    extend_obs_with_rm=rm_config['extend_obs'],
                     log_rm_info=True
                 )
             return env
@@ -240,14 +252,16 @@ def experiment(variant):
         # Create vectorized exploration environment
         def make_expl_env_fn():
             env = make_env(mode='expl')
-            # Wrap with RM if enabled
-            if rm_enabled:
-                from copy import deepcopy
+            # Wrap with RM if enabled - create fresh RM in subprocess
+            if rm_config['enabled'] and rm_config['task_name']:
+                from llm_ltl.reward_machines import create_rm, get_events_fn
+                rm = create_rm(rm_config['task_name'])
+                events_fn = get_events_fn(rm_config['task_name'])
                 env = RMEnvWrapper(
-                    env, deepcopy(rm_instance), rm_events_fn,
-                    rm_reward_scale=rm_reward_scale,
-                    use_rm_reward_only=rm_use_only,
-                    extend_obs_with_rm=rm_extend_obs,
+                    env, rm, events_fn,
+                    rm_reward_scale=rm_config['reward_scale'],
+                    use_rm_reward_only=rm_config['use_only'],
+                    extend_obs_with_rm=rm_config['extend_obs'],
                     log_rm_info=True
                 )
             return env
